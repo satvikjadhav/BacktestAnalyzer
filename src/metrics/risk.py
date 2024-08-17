@@ -1,4 +1,4 @@
-from base import Metric
+from metrics.base import Metric
 import pandas as pd
 
 

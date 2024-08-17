@@ -5,7 +5,7 @@ class DataLoader:
     @staticmethod
     def load_csv(file_path: str) -> pd.DataFrame:
         df = pd.read_csv(file_path)
-        df["Entry Date"] = pd.to_datetime(df["Entry Date"], format="%d-%m-%y")
+        df["Entry Date"] = pd.to_datetime(df["Entry Date"], format='%Y-%m-%d')
         df["Day of Week"] = df["Entry Date"].dt.day_name()
         return df
 
