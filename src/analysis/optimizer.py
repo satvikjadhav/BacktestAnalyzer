@@ -62,3 +62,4 @@ class Optimizer:
         summary = pd.DataFrame(list(optimal_setup['setup'].items()), columns=['Day', 'Optimal Stop Loss'])
         summary['Total Profit'] = optimal_setup['total_profit']
         return summary
+    

@@ -3,7 +3,7 @@ from typing import List
 from data.loader import DataLoader
 from data.processor import DataProcessor
 from analysis.calculator import MetricsCalculator
-from optimizer import Optimizer
+from analysis.optimizer import Optimizer
 import os
 
 
