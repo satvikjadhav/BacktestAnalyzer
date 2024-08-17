@@ -21,4 +21,3 @@ class MetricsCalculator:
 
     def add_metric(self, name: str, metric: Metric):
         self.metrics[name] = metric
-        
