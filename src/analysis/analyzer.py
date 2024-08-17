@@ -13,6 +13,7 @@ class BacktestAnalyzer:
         self.all_data = pd.DataFrame()
         self.metrics_calculator = MetricsCalculator()
         self.optimizer = None
+        self.total_days = None
 
     def load_and_process_data(self):
         for file_path in self.file_paths:
@@ -24,6 +25,7 @@ class BacktestAnalyzer:
             self.all_data = pd.concat([self.all_data, df], ignore_index=True)
 
         self.optimizer = Optimizer(self.all_data)
+        self.total_days = len(self.all_data["Entry Date"].unique())
 
     def get_optimal_stop_loss_by_day(self, df: pd.DataFrame) -> pd.DataFrame:
         grouped = df.groupby(['Day of Week', 'Stop Loss %'])
