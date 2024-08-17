@@ -3,6 +3,7 @@ from typing import List
 from data.loader import DataLoader
 from data.processor import DataProcessor
 from analysis.calculator import MetricsCalculator
+from optimizer import Optimizer
 import os
 
 
@@ -11,6 +12,7 @@ class BacktestAnalyzer:
         self.file_paths = file_paths
         self.all_data = pd.DataFrame()
         self.metrics_calculator = MetricsCalculator()
+        self.optimizer = None
 
     def load_and_process_data(self):
         for file_path in self.file_paths:
@@ -20,6 +22,8 @@ class BacktestAnalyzer:
             df['Strategy Type'] = strategy_type
             df['Stop Loss %'] = stop_loss
             self.all_data = pd.concat([self.all_data, df], ignore_index=True)
+
+        self.optimizer = Optimizer(self.all_data)
 
     def get_optimal_stop_loss_by_day(self, df: pd.DataFrame) -> pd.DataFrame:
         grouped = df.groupby(['Day of Week', 'Stop Loss %'])
@@ -52,3 +56,7 @@ class BacktestAnalyzer:
         pivot_table['Best Stop Loss %'] = pivot_table.idxmax(axis=1)
         return pivot_table
     
+    def optimize(self, x: int) -> pd.DataFrame:
+        if self.optimizer is None:
+            raise ValueError("Data has not been loaded. Call load_and_process_data() first.")
+        return self.optimizer.get_optimal_setup_summary(x)
