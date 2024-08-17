@@ -63,7 +63,7 @@ class BacktestAnalyzer:
             raise ValueError("Data has not been loaded. Call load_and_process_data() first.")
         return self.optimizer.get_optimal_setup_summary(x)
     
-    def generate_summary(self, x: int = None) -> pd.DataFrame:
+    def generate_summary(self, x: int = None, sl: str = None) -> pd.DataFrame:
         data = self.all_data if x is None else DataProcessor.filter_last_x_days(self.all_data, x)
         grouped = data.groupby(['Day of Week', 'Stop Loss %'])
         
@@ -73,6 +73,8 @@ class BacktestAnalyzer:
             metrics['Day of Week'] = day
             metrics['Stop Loss %'] = stop_loss
             summary.append(metrics)
+        
+        summary = summary if sl is None else [entry for entry in summary if entry['Stop Loss %'] == sl]
         
         return pd.DataFrame(summary)
     

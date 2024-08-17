@@ -26,7 +26,7 @@ def main():
     # print(pivot_table)
 
     # Generate summary for last 365 days
-    # summary_365 = analyzer.generate_summary(365)
+    # summary_365 = analyzer.generate_summary(365, '10p')
     # print("\nSummary of last 365 days:")
     # print(summary_365)
 
