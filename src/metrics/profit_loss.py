@@ -44,7 +44,13 @@ class MaxProfitInSingleTrade(Metric):
     def calculate(self, df: pd.DataFrame) -> float:
         return df['P/L'].max()
 
+    def is_higher_better(self) -> bool:
+        return True
+    
 class MaxLossInSingleTrade(Metric):
     def calculate(self, df: pd.DataFrame) -> float:
         return df['P/L'].min()
+
+    def is_higher_better(self) -> bool:
+        return False
     
