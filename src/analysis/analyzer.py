@@ -27,28 +27,37 @@ class BacktestAnalyzer:
         self.optimizer = Optimizer(self.all_data)
         self.total_days = len(self.all_data["Entry Date"].unique())
 
-    def get_optimal_stop_loss_by_metric(self, df: pd.DataFrame, metric_name: str = 'Total Profit') -> pd.DataFrame:
-        grouped = df.groupby(['Day of Week', 'Stop Loss %'])
+    def get_optimal_stop_loss_by_metric(self, df: pd.DataFrame, metric_name: str) -> pd.DataFrame:
+        grouped = df.groupby(['Day of Week', 'Stop Loss %', 'Strategy Type'])
 
         metrics = []
-        for (day, stop_loss), group in grouped:
+        for (day, stop_loss, strategy_type), group in grouped:
             group_metrics = self.metrics_calculator.calculate_metrics(group)
             group_metrics.update({
                 'Day of Week': day,
                 'Stop Loss %': stop_loss,
-                'Win %': (len(group[group['P/L'] > 0]) / len(group)) * 100 if len(group) > 0 else 0
+                'Strategy Type': strategy_type
             })
             metrics.append(group_metrics)
 
+        # Convert the metrics list to a DataFrame
         metrics_df = pd.DataFrame(metrics)
-        # Get the optimal stop loss based on a user provided metric
-        optimal_stop_loss = metrics_df.loc[metrics_df.groupby('Day of Week')[metric_name].idxmax()]
+
+        # Determine whether higher metric values are better or not
+        is_higher_better = self.metrics_calculator.is_higher_better(metric_name)
+        
+        # Use `idxmax` or `idxmin` based on whether higher values are better
+        idx = metrics_df.groupby('Day of Week')[metric_name].idxmax() if is_higher_better else metrics_df.groupby('Day of Week')[metric_name].idxmin()
+
+        # Retrieve the rows corresponding to the optimal stop loss for each day
+        optimal_stop_loss = metrics_df.loc[idx]
+
         return optimal_stop_loss
 
-    def analyze(self, x: int, exclude_days: List[str] = None, exclude_stoploss: List[str] = None) -> pd.DataFrame:
+    def analyze(self, x: int, exclude_days: List[str] = None, exclude_stoploss: List[str] = None, metric_name: str = 'Total Profit') -> pd.DataFrame:
         last_x_days_data = DataProcessor.filter_last_x_days(self.all_data, x)
         filtered_data = DataProcessor.exclude_days_or_stoploss(last_x_days_data, exclude_days, exclude_stoploss)
-        return self.get_optimal_stop_loss_by_metric(filtered_data)
+        return self.get_optimal_stop_loss_by_metric(filtered_data, metric_name)
 
     def generate_pivot_table(self) -> pd.DataFrame:
         grouped_data = self.all_data.groupby(['Strategy Type', 'Stop Loss %', 'Day of Week'])['P/L'].mean().reset_index()
