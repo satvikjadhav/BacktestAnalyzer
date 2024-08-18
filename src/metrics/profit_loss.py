@@ -9,6 +9,13 @@ class TotalProfit(Metric):
 
     def is_higher_better(self) -> bool:
         return True
+    
+class AverageProfit(Metric):
+    def calculate(self, df: pd.DataFrame) -> float:
+        return df['P/L'].mean()
+
+    def is_higher_better(self) -> bool:
+        return True
 
 class WinPercentage(Metric):
     def calculate(self, df: pd.DataFrame) -> float:
