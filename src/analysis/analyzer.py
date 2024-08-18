@@ -137,7 +137,7 @@ class BacktestAnalyzer:
         if stop_loss:
             metrics = [entry for entry in metrics if entry['Stop Loss %'] == stop_loss]
         
-        return self._filter_metrics_by_stop_loss(metrics, stop_loss) 
+        return pd.DataFrame(self._filter_metrics_by_stop_loss(metrics, stop_loss))
 
     def _generate_group_metrics(self, group: pd.DataFrame, day: str, stop_loss: float, strategy_type: str) -> dict:
         """Generate metrics for a specific group of data."""

@@ -1,5 +1,4 @@
-data/report
-data/trades
+data/*
 src/analysis/__pycache__
 src/data/__pycache__
 src/metrics/__pycache__
