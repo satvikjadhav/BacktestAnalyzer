@@ -36,10 +36,10 @@ class BacktestAnalyzer:
         # Calculate the total number of unique days in the data
         self.total_days = len(self.all_data["Entry Date"].unique())
 
-    def analyze(self, days: int, exclude_days: Optional[List[str]] = None, exclude_stoploss: Optional[List[str]] = None, metric_name: str = 'Total Profit') -> pd.DataFrame:
+    def analyze(self, days: int, exclude_days: Optional[List[str]] = None, exclude_stoploss: Optional[List[str]] = None, metric_name: str = 'Total Profit', day_of_week: Optional[str] = None) -> pd.DataFrame:
         """Analyze and determine the optimal stop loss based on the given metric."""
         # Filter data for the last X days and apply exclusions (e.g., certain days or stop losses)
-        filtered_data = self._filter_data_for_analysis(days, exclude_days, exclude_stoploss)
+        filtered_data = self._filter_data_for_analysis(days, exclude_days, exclude_stoploss, day_of_week)
         
         # Return the optimal stop loss for the given metric
         return self._get_optimal_stop_loss_by_metric(filtered_data, metric_name)
@@ -61,19 +61,27 @@ class BacktestAnalyzer:
             raise ValueError("Data has not been loaded. Call load_and_process_data() first.")
         return self.optimizer.get_optimal_setup_summary(days)
 
-    def generate_summary(self, days: Optional[int] = None, stop_loss: Optional[str] = None) -> pd.DataFrame:
+    def generate_summary(self, days: Optional[int] = None, stop_loss: Optional[str] = None, day_of_week: Optional[str] = None) -> pd.DataFrame:
         """Generate a summary of metrics grouped by day of the week and stop loss percentage."""
         # Filter data for the last X days if specified
-        data = self._filter_data(days)
+        data = self._filter_data(days, day_of_week)
         
         # Calculate metrics grouped by day of the week and stop loss percentage
         summary = self._calculate_grouped_metrics(data, stop_loss)
 
         return pd.DataFrame(summary)
     
-    def _filter_data(self, days: Optional[int] = None) -> pd.DataFrame:
-        """Filter data for the last X days if specified."""
-        return self.all_data if days is None else DataProcessor.filter_last_x_days(self.all_data, days)
+    def _filter_data(self, days: Optional[int] = None, day_of_week: Optional[str] = None) -> pd.DataFrame:
+        """Filter data based on the number of days and day of the week"""
+        data = self.all_data
+
+        if days is not None:
+            data = DataProcessor.filter_last_x_days(data, days)
+        
+        if day_of_week is not None:
+            data = data[data['Day of Week'] == day_of_week]
+        
+        return data
 
     def _extract_strategy_details(self, file_path: str):
         """Extract strategy type and stop loss from the file name."""
@@ -87,13 +95,19 @@ class BacktestAnalyzer:
         df['Stop Loss %'] = stop_loss
         return df
 
-    def _filter_data_for_analysis(self, days: int, exclude_days: Optional[List[str]], exclude_stoploss: Optional[List[str]]) -> pd.DataFrame:
+    def _filter_data_for_analysis(self, days: int, exclude_days: Optional[List[str]], exclude_stoploss: Optional[List[str]], day_of_week: Optional[str]) -> pd.DataFrame:
         """Filter the data for analysis based on the last X days and exclude criteria."""
         # Filter the data to include only the last X days
         last_x_days_data = DataProcessor.filter_last_x_days(self.all_data, days)
-        
+
         # Apply exclusions for specific days or stop losses
-        return DataProcessor.exclude_days_or_stoploss(last_x_days_data, exclude_days, exclude_stoploss)
+        filtered_data = DataProcessor.exclude_days_or_stoploss(last_x_days_data, exclude_days, exclude_stoploss)
+        
+        # Apply Filter for specifc day if given
+        if day_of_week is not None:
+            filtered_data = filtered_data[filtered_data['Day of Week'] == day_of_week]
+        
+        return filtered_data
 
     def _get_optimal_stop_loss_by_metric(self, df: pd.DataFrame, metric_name: str) -> pd.DataFrame:
         """Determine the optimal stop loss based on the specified metric."""
