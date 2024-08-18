@@ -6,9 +6,9 @@ class Optimizer:
     def __init__(self, data: pd.DataFrame):
         self.data = data
 
-    def find_optimal_setup(self, x: int) -> Dict[str, Any]:
+    def find_optimal_setup(self, x: int = None) -> Dict[str, Any]:
         # Filter for the last x days
-        last_x_days_data = DataProcessor.filter_last_x_days(self.data, x)
+        last_x_days_data = self.data if x is None else DataProcessor.filter_last_x_days(self.data, x)
 
         days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         stop_loss_options = last_x_days_data['Stop Loss %'].unique()
