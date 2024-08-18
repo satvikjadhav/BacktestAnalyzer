@@ -7,6 +7,9 @@ class RewardToRiskRatio(Metric):
         total_profit = df[df['P/L'] > 0]['P/L'].sum()
         total_loss = abs(df[df['P/L'] < 0]['P/L'].sum())
         return total_profit / total_loss if total_loss != 0 else float('inf')
+    
+    def is_higher_better(self) -> bool:
+        return True
 
 class MaxDrawdown(Metric):
     def calculate(self, df: pd.DataFrame) -> float:
@@ -14,4 +17,7 @@ class MaxDrawdown(Metric):
         running_max = cumulative.cummax()
         drawdown = running_max - cumulative
         return drawdown.max()
+    
+    def is_higher_better(self) -> bool:
+        return False  # For losses, a higher (less negative) number is better
     

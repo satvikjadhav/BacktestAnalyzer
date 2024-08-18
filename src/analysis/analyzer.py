@@ -27,7 +27,7 @@ class BacktestAnalyzer:
         self.optimizer = Optimizer(self.all_data)
         self.total_days = len(self.all_data["Entry Date"].unique())
 
-    def get_optimal_stop_loss_by_day(self, df: pd.DataFrame) -> pd.DataFrame:
+    def get_optimal_stop_loss_by_metric(self, df: pd.DataFrame, metric_name: str = 'Total Profit') -> pd.DataFrame:
         grouped = df.groupby(['Day of Week', 'Stop Loss %'])
 
         metrics = []
@@ -41,13 +41,14 @@ class BacktestAnalyzer:
             metrics.append(group_metrics)
 
         metrics_df = pd.DataFrame(metrics)
-        optimal_stop_loss = metrics_df.loc[metrics_df.groupby('Day of Week')['Avg Profit on Winning Trades'].idxmax()]
+        # Get the optimal stop loss based on a user provided metric
+        optimal_stop_loss = metrics_df.loc[metrics_df.groupby('Day of Week')[metric_name].idxmax()]
         return optimal_stop_loss
 
     def analyze(self, x: int, exclude_days: List[str] = None, exclude_stoploss: List[str] = None) -> pd.DataFrame:
         last_x_days_data = DataProcessor.filter_last_x_days(self.all_data, x)
         filtered_data = DataProcessor.exclude_days_or_stoploss(last_x_days_data, exclude_days, exclude_stoploss)
-        return self.get_optimal_stop_loss_by_day(filtered_data)
+        return self.get_optimal_stop_loss_by_metric(filtered_data)
 
     def generate_pivot_table(self) -> pd.DataFrame:
         grouped_data = self.all_data.groupby(['Strategy Type', 'Stop Loss %', 'Day of Week'])['P/L'].mean().reset_index()
