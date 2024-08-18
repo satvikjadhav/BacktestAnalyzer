@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from data.loader import DataLoader
 from data.processor import DataProcessor
 from analysis.calculator import MetricsCalculator
@@ -48,7 +48,7 @@ class BacktestAnalyzer:
         """Generate a pivot table summarizing by the provided metric (P/L) by strategy type and day of the week."""
         # Create a pivot table grouped by day of the week and stop loss percentage
         # Filter data for the last X days if specified
-        data = self.all_data if days is None else DataProcessor.filter_last_x_days(self.all_data, days)
+        data = self._filter_data(days)
         pivot_table = self._create_pivot_table(data)
         
         # Add a column indicating the best stop loss for each day
@@ -64,12 +64,16 @@ class BacktestAnalyzer:
     def generate_summary(self, days: Optional[int] = None, stop_loss: Optional[str] = None) -> pd.DataFrame:
         """Generate a summary of metrics grouped by day of the week and stop loss percentage."""
         # Filter data for the last X days if specified
-        data = self.all_data if days is None else DataProcessor.filter_last_x_days(self.all_data, days)
+        data = self._filter_data(days)
         
         # Calculate metrics grouped by day of the week and stop loss percentage
         summary = self._calculate_grouped_metrics(data, stop_loss)
 
         return pd.DataFrame(summary)
+    
+    def _filter_data(self, days: Optional[int] = None) -> pd.DataFrame:
+        """Filter data for the last X days if specified."""
+        return self.all_data if days is None else DataProcessor.filter_last_x_days(self.all_data, days)
 
     def _extract_strategy_details(self, file_path: str):
         """Extract strategy type and stop loss from the file name."""
@@ -119,7 +123,7 @@ class BacktestAnalyzer:
         if stop_loss:
             metrics = [entry for entry in metrics if entry['Stop Loss %'] == stop_loss]
         
-        return pd.DataFrame(metrics)
+        return self._filter_metrics_by_stop_loss(metrics, stop_loss) 
 
     def _generate_group_metrics(self, group: pd.DataFrame, day: str, stop_loss: float, strategy_type: str) -> dict:
         """Generate metrics for a specific group of data."""
@@ -129,6 +133,12 @@ class BacktestAnalyzer:
             'Stop Loss %': stop_loss,
             'Strategy Type': strategy_type
         })
+        return metrics
+    
+    def _filter_metrics_by_stop_loss(self, metrics: List[Dict[str, Any]], stop_loss: Optional[str]) -> List[Dict[str, Any]]:
+        """Filter metrics by stop loss if specified."""
+        if stop_loss is not None:
+            return [entry for entry in metrics if entry['Stop Loss %'] == stop_loss]
         return metrics
 
     def _create_pivot_table(self, data: pd.DataFrame) -> pd.DataFrame:
