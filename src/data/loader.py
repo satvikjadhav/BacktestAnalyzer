@@ -7,6 +7,8 @@ class DataLoader:
         df = pd.read_csv(file_path)
         df["Entry Date"] = pd.to_datetime(df["Entry Date"], format='%Y-%m-%d')
         df["Day of Week"] = df["Entry Date"].dt.day_name()
+        # filtering on Type = Null so that we don't consider individual strike data
+        df = df[pd.isna(df['Type'])]
         return df
 
     @staticmethod
