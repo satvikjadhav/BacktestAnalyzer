@@ -38,13 +38,17 @@ class Optimizer:
         return best_setup
 
     def _generate_setups(self, days: List[str], stop_loss_options: List[str], strategy_types: List[str]) -> List[Dict[str, Tuple[str, str]]]:
+        # Base case: If no more days, return a list with an empty dictionary
         if not days:
             return [{}]
         
         setups = []
+        # Iterate over all combinations of stop_loss and strategy_type
         for stop_loss in stop_loss_options:
             for strategy_type in strategy_types:
+                # Recursive call with remaining days
                 sub_setups = self._generate_setups(days[1:], stop_loss_options, strategy_types)
+                # For each sub-setup, add current day's setup and append to results
                 for setup in sub_setups:
                     setup[days[0]] = (stop_loss, strategy_type)
                     setups.append(setup)
