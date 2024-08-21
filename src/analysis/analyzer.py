@@ -71,6 +71,18 @@ class BacktestAnalyzer:
 
         return pd.DataFrame(summary)
     
+    def time_based_performance_breakdown(self, days: int, period: str, exclude_days: Optional[List[str]] = None, exclude_stoploss: Optional[List[str]] = None, day_of_week: Optional[str] = None) -> pd.DataFrame:
+        """Analyze performance by time period. 
+        
+        Valid Time Periods: Use 'M' for monthly, 'Q' for quarterly, or 'Y' for yearly."""
+        self.period = period
+        # Filter data for the last X days and apply exclusions (e.g., certain days or stop losses)
+        filtered_data = self._filter_data_for_analysis(days, exclude_days, exclude_stoploss, day_of_week)
+
+        metrics_calculated = self._calculate_grouped_metrics(filtered_data, columns=['Period'])
+        return metrics_calculated
+        
+    
     def _filter_data(self, days: Optional[int] = None, day_of_week: Optional[str] = None) -> pd.DataFrame:
         """Filter data based on the number of days and day of the week"""
         data = self.all_data
@@ -82,6 +94,20 @@ class BacktestAnalyzer:
             data = data[data['Day of Week'] == day_of_week]
         
         return data
+
+    def _group_by(self, df: pd.DataFrame, columns: Optional[list[str]]) -> pd.DataFrame:
+        """
+        Groups the DataFrame by a specified list of columns.
+        """
+        default_col_list = ['Day of Week', 'Stop Loss %', 'Strategy Type']
+
+        if columns:
+            default_col_list += columns
+        
+        if 'Period' in default_col_list:
+            df['Period'] = df['Entry Date'].dt.to_period(self.period)
+
+        return df.groupby(default_col_list)
 
     def _extract_strategy_details(self, file_path: str):
         """Extract strategy type and stop loss from the file name."""
@@ -123,36 +149,35 @@ class BacktestAnalyzer:
         # Retrieve the rows corresponding to the optimal stop loss for each day
         return metrics_df.loc[idx]
 
-    def _calculate_grouped_metrics(self, df: pd.DataFrame, stop_loss: Optional[str] = None) -> pd.DataFrame:
-        """Calculate metrics grouped by day of the week, stop loss, and strategy type."""
-        grouped = df.groupby(['Day of Week', 'Stop Loss %', 'Strategy Type'])
+    def _calculate_grouped_metrics(self, df: pd.DataFrame, columns: Optional[list[str]] = None, stop_loss: Optional[str] = None) -> pd.DataFrame:
+        """Calculate metrics grouped by day of the week, stop loss, and strategy type (and additional columns if given)"""
+        grouped = self._group_by(df, columns)
         
         # Calculate metrics for each group and store the results in a list
+        # Extract group keys dynamically
         metrics = [
-            self._generate_group_metrics(group, day, stop_loss, strategy_type)
-            for (day, stop_loss, strategy_type), group in grouped
+            self._generate_group_metrics(group, dict(zip(grouped.grouper.names, keys)))
+            for keys, group in grouped
         ]
 
         # Optionally filter the summary for a specific stop loss percentage
         if stop_loss:
-            metrics = [entry for entry in metrics if entry['Stop Loss %'] == stop_loss]
+            metrics = [entry for entry in metrics if entry.get('Stop Loss %') == stop_loss]
         
         return pd.DataFrame(self._filter_metrics_by_stop_loss(metrics, stop_loss))
 
-    def _generate_group_metrics(self, group: pd.DataFrame, day: str, stop_loss: float, strategy_type: str) -> dict:
+    def _generate_group_metrics(self, group: pd.DataFrame, group_keys: dict) -> dict:
         """Generate metrics for a specific group of data."""
         metrics = self.metrics_calculator.calculate_metrics(group)
-        metrics.update({
-            'Day of Week': day,
-            'Stop Loss %': stop_loss,
-            'Strategy Type': strategy_type
-        })
+        metrics.update(group_keys)
+        print(metrics)
+        exit()
         return metrics
     
     def _filter_metrics_by_stop_loss(self, metrics: List[Dict[str, Any]], stop_loss: Optional[str]) -> List[Dict[str, Any]]:
         """Filter metrics by stop loss if specified."""
         if stop_loss is not None:
-            return [entry for entry in metrics if entry['Stop Loss %'] == stop_loss]
+            return [entry for entry in metrics if entry.get('Stop Loss %') == stop_loss]
         return metrics
 
     def _create_pivot_table(self, data: pd.DataFrame) -> pd.DataFrame:
