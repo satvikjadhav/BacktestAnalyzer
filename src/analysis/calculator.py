@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional, List
 import pandas as pd
 from metrics.base import Metric
 from metrics.profit_loss import AverageProfitOnWinningTrades, AverageLossOnLosingTrades, MaxProfitInSingleTrade, MaxLossInSingleTrade, TotalProfit, WinPercentage, AverageProfit
@@ -6,7 +6,7 @@ from metrics.risk import RewardToRiskRatio, MaxDrawdown, SharpeRatio, SortinoRat
 
 
 class MetricsCalculator:
-    def __init__(self):
+    def __init__(self, metrics: Optional[List[str]]):
         self.metrics: Dict[str, Metric] = {
             'Avg Profit on Winning Trades': AverageProfitOnWinningTrades(),
             'Avg Loss on Losing Trades': AverageLossOnLosingTrades(),
@@ -21,6 +21,9 @@ class MetricsCalculator:
             'Sortino Ratio': SortinoRatio(),
             'Calmar Ratio': CalmarRatio(),
         }
+
+        if metrics:
+            self.metrics = {name: metric for name, metric in self.metrics.items() if name in metrics}
 
     def calculate_metrics(self, df: pd.DataFrame) -> Dict[str, float]:
         return {name: metric.calculate(df) for name, metric in self.metrics.items()}

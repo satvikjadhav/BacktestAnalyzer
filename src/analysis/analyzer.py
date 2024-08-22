@@ -8,11 +8,11 @@ import os
 
 
 class BacktestAnalyzer:
-    def __init__(self, file_paths: List[str]):
+    def __init__(self, file_paths: List[str], metrics: Optional[List[str]] = None):
         """Initialize the BacktestAnalyzer with file paths and essential components."""
         self.file_paths = file_paths
         self.all_data = pd.DataFrame()
-        self.metrics_calculator = MetricsCalculator()
+        self.metrics_calculator = MetricsCalculator(metrics)
         self.optimizer = None
         self.total_days = None
 
@@ -170,8 +170,7 @@ class BacktestAnalyzer:
         """Generate metrics for a specific group of data."""
         metrics = self.metrics_calculator.calculate_metrics(group)
         metrics.update(group_keys)
-        print(metrics)
-        exit()
+
         return metrics
     
     def _filter_metrics_by_stop_loss(self, metrics: List[Dict[str, Any]], stop_loss: Optional[str]) -> List[Dict[str, Any]]:
