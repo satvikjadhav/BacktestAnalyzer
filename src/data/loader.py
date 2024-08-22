@@ -16,4 +16,6 @@ class DataLoader:
         parts = file_name.split("_")
         strategy_type = parts[1]
         stop_loss = parts[-1].replace(".csv", "")
+        entry_time = parts[2]
+        exit_time = parts[3]
         return strategy_type, stop_loss
