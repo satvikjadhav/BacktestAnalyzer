@@ -2,7 +2,7 @@ from typing import Dict
 import pandas as pd
 from metrics.base import Metric
 from metrics.profit_loss import AverageProfitOnWinningTrades, AverageLossOnLosingTrades, MaxProfitInSingleTrade, MaxLossInSingleTrade, TotalProfit, WinPercentage, AverageProfit
-from metrics.risk import RewardToRiskRatio, MaxDrawdown
+from metrics.risk import RewardToRiskRatio, MaxDrawdown, SharpeRatio, SortinoRatio, CalmarRatio
 
 
 class MetricsCalculator:
@@ -16,7 +16,10 @@ class MetricsCalculator:
             'Max Drawdown': MaxDrawdown(),
             'Total Profit': TotalProfit(),
             'Win %': WinPercentage(),
-            'Average Profit/Loss': AverageProfit()
+            'Average Profit/Loss': AverageProfit(),
+            'Sharpe Ratio': SharpeRatio(),
+            'Sortino Ratio': SortinoRatio(),
+            'Calmar Ratio': CalmarRatio(),
         }
 
     def calculate_metrics(self, df: pd.DataFrame) -> Dict[str, float]:
