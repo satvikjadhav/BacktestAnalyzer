@@ -180,10 +180,6 @@ class BacktestAnalyzer:
             self._generate_group_metrics(group, dict(zip(grouped.grouper.names, keys)))
             for keys, group in grouped
         ]
-
-        # Optionally filter the summary for a specific stop loss percentage
-        if stop_loss:
-            metrics = [entry for entry in metrics if entry.get('Stop Loss %') in stop_loss]
         
         return pd.DataFrame(self._filter_metrics_by_stop_loss(metrics, stop_loss))
 
@@ -197,7 +193,7 @@ class BacktestAnalyzer:
     def _filter_metrics_by_stop_loss(self, metrics: List[Dict[str, Any]], stop_loss: Optional[str]) -> List[Dict[str, Any]]:
         """Filter metrics by stop loss if specified."""
         if stop_loss is not None:
-            return [entry for entry in metrics if entry.get('Stop Loss %') == stop_loss]
+            return [entry for entry in metrics if entry.get('Stop Loss %') in stop_loss]
         return metrics
 
     def _create_pivot_table(self, data: pd.DataFrame) -> pd.DataFrame:
