@@ -71,7 +71,7 @@ class BacktestAnalyzer:
 
         return pd.DataFrame(summary)
     
-    def time_based_performance_breakdown(self, days: int, period: str, exclude_include_days: Optional[List[str]] = None, stoploss: Optional[List[str]] = None, include_days: bool = True, include_stoploss: bool = True) -> pd.DataFrame:
+    def time_based_performance_breakdown(self, days: int, period: str, exclude_include_days: Optional[List[str]] = None, stoploss: Optional[List[str]] = None, include_days: bool = True, include_stoploss: bool = True, plot: bool = False) -> pd.DataFrame:
         """Analyze performance by time period. 
         
         Valid Time Periods: Use 'M' for monthly, 'Q' for quarterly, or 'Y' for yearly."""
@@ -80,7 +80,45 @@ class BacktestAnalyzer:
         filtered_data = self._filter_data_for_analysis(days, exclude_include_days, stoploss, include_days, include_stoploss)
 
         metrics_calculated = self._calculate_grouped_metrics(filtered_data, columns=['Period'])
+        
+        if plot:
+            self._plot_time_based_performance(metrics_calculated)
+
         return metrics_calculated
+    
+    def _plot_time_based_performance(self, df: pd.DataFrame):
+        import matplotlib.pyplot as plt
+        import plotly.graph_objects as go
+        
+        df = df.groupby(['Period', 'Strategy Type', 'Stop Loss %'])['Total Profit'].sum().reset_index()
+        pivot_table = df.pivot_table(values='Total Profit', index='Period', columns=['Strategy Type', 'Stop Loss %'], aggfunc='sum')
+        
+        # Convert Period index to strings
+        pivot_table.index = pivot_table.index.astype(str)
+
+        fig = go.Figure()
+
+        for column in pivot_table.columns:
+            strategy_type, stop_loss = column
+            fig.add_trace(go.Scatter(
+                x=pivot_table.index,
+                y=pivot_table[column],
+                mode='lines+markers',
+                name=f'{strategy_type} - {stop_loss}',
+                hovertemplate='Period: %{x}<br>Total Profit: %{y:.2f}'
+            ))
+
+        fig.update_layout(
+            title='Profit/Loss Trends Over Time by Strategy Type',
+            xaxis_title='Period',
+            yaxis_title='Total Profit/Loss',
+            legend_title='Strategy Type - Stop Loss %',
+            hovermode='x unified'
+        )
+
+        fig.show()
+
+
 
     def _group_by(self, df: pd.DataFrame, columns: Optional[list[str]]) -> pd.DataFrame:
         """
